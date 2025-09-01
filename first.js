@@ -33,13 +33,33 @@ fs.writeFileSync("same.txt", "Hello this is sample text");
 const data = fs.readFileSync("same.txt", "utf-8");
 console.log(data);
 
-console.log(os.platform());
-console.log(os.arch());
-console.log(os.totalmem());
-console.log(os.freemem());
-console.log(os.uptime());
+fs.appendFile("same.txt", "\n Appended using appenFile method", (err) => {
+  console.log(err);
+});
+
+fs.unlink("same.txt", (err) => {
+  console.log(err);
+});
+
+fs.mkdir("myfolder",(err)=>{
+    console.log(err)
+});
+
+fs.rmdir("myfolder",()=>{
+
+});
+
+
+
+// console.log(os.platform());
+// console.log(os.arch());
+// console.log(os.totalmem());
+// console.log(os.freemem());
+// console.log(os.up(time());
 
 const filePath = "ram/docs/letter.docs";
 console.log("base Name", path.basename(filePath));
 console.log(" Directory Name", path.dirname(filePath));
 console.log("File extension ", path.extname(filePath));
+
+// rest spread
