@@ -1,6 +1,10 @@
 import express from "express";
 import bookRoutes from "./routes/book.route.js";
+import userRoutes from "./routes/user.route.js"
+import { connectDB } from "./config/db.js";
+
 const app = express();
+connectDB()
 
 app.use(express.json());
 
@@ -9,14 +13,8 @@ app.use(express.json());
 // coming from client and the response sent by server
 
 // function which has req res next
-
-function logger(req, res, next) {
-  console.log(`${req.method}  ${req.url}`);
-  next();
-}
-
-app.use(logger);
 app.use("/books", bookRoutes);
+app.use("/users",userRoutes)
 
 app.get("/", (req, res) => {
   res.send("Server is running");

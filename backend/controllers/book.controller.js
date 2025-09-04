@@ -12,11 +12,23 @@ let books = [
 ];
 
 const createBook = (req, res) => {
-  const { title, author } = req.body;
-  const newBook = { id: books.length + 1, title, author };
-  books.push(newBook);
-  console.log(books);
-  res.status(201).json(newBook);
+  try {
+    const { title, author } = req.body;
+    if (!title || !author) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
+    }
+    const newBook = { id: books.length + 1, title, author };
+    books.push(newBook);
+    console.log(books);
+    res.status(201).json(newBook);
+  } catch (error) {
+    console.log(error.message)
+    res.status(500).json({
+      message: "Internal server error",
+    });
+  }
 };
 
 const getBook = (req, res) => {
