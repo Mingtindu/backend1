@@ -1,0 +1,100 @@
+import User from "../model/user.model.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+//steps
+// validate user input required fields
+// check if user already exist or not
+// hash the password
+// save
+const createUser = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User already exists",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    await User.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    res.status(201).json({
+      message: "User created",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+const login = async (req, res) => {
+  // email password both required validate
+  // user exists or not check
+  // password compare
+  // token generate
+  // send response
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Email and password are required",
+    });
+  }
+
+  const existUser = await User.findOne({ email });
+  if (!existUser) {
+    return res.status(400).json({
+      message: "User does not exist with this email",
+    });
+  }
+
+  const isMatch = await bcrypt.compare(password, existUser.password);
+  if (!isMatch) {
+    return res.status(400).json({
+      message: "Invalid password",
+    });
+  }
+
+  const token = jwt.sign(
+    { id: existUser._id, email: existUser.email },
+    "jwtsecret",
+    {
+      expiresIn: "1m",
+    }
+  );
+
+  res.status(200).json({
+    message: "Login success",
+    user: existUser,
+    token: token,
+  });
+};
+
+const getMyProfile = async (req, res) => {
+
+    console.log(req.user)
+  try { 
+    const user = await User.findById(req.user.id);
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export { createUser, login, getMyProfile };
