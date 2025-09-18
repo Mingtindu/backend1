@@ -1,6 +1,10 @@
 import User from "../model/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { sendMail } from "../lib/email/sendMail.js";
+import { forgotPasswordTemplate } from "../lib/email/templates/forgotPasswordTemplate.js";
+import { triggerAsyncId } from "async_hooks";
 //steps
 // validate user input required fields
 // check if user already exist or not
@@ -8,7 +12,8 @@ import jwt from "jsonwebtoken";
 // save
 const createUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
+    console.log(name, email, password);
     if (!name || !email || !password) {
       return res.status(400).json({
         message: "All fields are required",
@@ -29,6 +34,7 @@ const createUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      role,
     });
 
     res.status(201).json({
@@ -130,4 +136,68 @@ const changePassword = async (req, res) => {
   }
 };
 
-export { createUser, login, getMyProfile, changePassword };
+const forgotPassword = async (req, res) => {
+
+  const { email } = req.body;
+  const user = await User.findOne({ email: email });
+  if (!user) {
+    return res.status(404).json({ message: "User does not exist" });
+  }
+
+  const token = crypto.randomBytes(20).toString("hex");
+  user.resetPasswordToken = token;
+  user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
+
+  await user.save();
+
+  await sendMail({
+    to: user.email,
+    subject: "Password Reset Request",
+    text: "Password reset request",
+    html: forgotPasswordTemplate(user.name, token),
+  });
+
+  res.status(200).json({
+    message: "Password reset token sent to email",
+  });
+};
+
+const verifyResetToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+    console.log(token);
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      // resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    res.status(200).json({
+      message: "Token is valid",
+      email: user.email,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+
+// {
+//   email, password;
+// }
+
+// /reset-password
+
+export {
+  createUser,
+  login,
+  getMyProfile,
+  changePassword,
+  forgotPassword,
+  verifyResetToken,
+};

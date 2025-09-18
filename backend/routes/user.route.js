@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { createUser } from "../controllers/user.controller.js";
+import { deleteUser, updateUser } from "../controllers/user.controller.js";
+import { auth } from "../middlewares/auth.js";
+import { authorizeRoles } from "../middlewares/authorize.js";
 
 const router = Router();
-
-router.post("/", createUser);
+router.put("/:id", auth, authorizeRoles("user","admin"), updateUser);
+router.delete("/:id", deleteUser);
 
 export default router;

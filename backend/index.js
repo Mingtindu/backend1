@@ -2,6 +2,7 @@ import express from "express";
 import bookRoutes from "./routes/book.route.js";
 import userRoutes from "./routes/user.route.js"
 import authRoutes from "./routes/auth.route.js"
+import uploadRoutes from "./routes/upload.route.js"
 import { connectDB } from "./config/db.js";
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/books", bookRoutes);
 app.use("/users",userRoutes)
 app.use("/auth",authRoutes)
+app.use("/upload",uploadRoutes)
 
 
 app.get("/", (req, res) => {
