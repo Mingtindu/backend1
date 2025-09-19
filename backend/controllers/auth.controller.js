@@ -1,10 +1,8 @@
 import User from "../model/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
 import { sendMail } from "../lib/email/sendMail.js";
 import { forgotPasswordTemplate } from "../lib/email/templates/forgotPasswordTemplate.js";
-import { triggerAsyncId } from "async_hooks";
 //steps
 // validate user input required fields
 // check if user already exist or not
@@ -137,14 +135,14 @@ const changePassword = async (req, res) => {
 };
 
 const forgotPassword = async (req, res) => {
-
   const { email } = req.body;
   const user = await User.findOne({ email: email });
   if (!user) {
     return res.status(404).json({ message: "User does not exist" });
   }
 
-  const token = crypto.randomBytes(20).toString("hex");
+  const token = Math.floor(100000 + Math.random() * 900000).toString();
+  //[100000, 999999]. 6 digit otp
   user.resetPasswordToken = token;
   user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
 
@@ -164,16 +162,19 @@ const forgotPassword = async (req, res) => {
 
 const verifyResetToken = async (req, res) => {
   try {
-    const { token } = req.body;
-    console.log(token);
+    const { email, token } = req.body;
     const user = await User.findOne({
+      email,
       resetPasswordToken: token,
-      // resetPasswordExpires: { $gt: Date.now() },
     });
 
     if (!user) {
       return res.status(400).json({ message: "Invalid or expired token" });
     }
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    user.resetVerified = true;
+    await user.save();
 
     res.status(200).json({
       message: "Token is valid",
@@ -186,6 +187,35 @@ const verifyResetToken = async (req, res) => {
   }
 };
 
+const resetPassword = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (!user.resetVerified) {
+      return res.status(403).json({
+        message: "OTP  not verified",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    user.resetVerified = false;
+    await user.save();
+
+    res.status(200).json({
+      message: "Password updated",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 // {
 //   email, password;
@@ -200,4 +230,5 @@ export {
   changePassword,
   forgotPassword,
   verifyResetToken,
+  resetPassword,
 };
