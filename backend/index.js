@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.route.js";
 import uploadRoutes from "./routes/upload.route.js";
 import borroRoutes from "./routes/borrow.route.js";
 import { connectDB } from "./config/db.js";
+import { config } from "./config/config.js";
 
 const app = express();
 connectDB();
@@ -26,6 +27,6 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
-app.listen(8000, () => {
-  console.log("server is running on port 8000");
+app.listen(config.PORT, () => {
+  console.log(`server is running on port ${config.PORT}`);
 });
