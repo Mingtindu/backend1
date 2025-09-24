@@ -27,8 +27,18 @@ export const createBook = async (req, res) => {
 // Get all books
 export const getAllBooks = async (req, res) => {
   try {
-    const books = await Book.find().populate("borrowedBy", "name email");
-    res.status(200).json({ books });
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const books = await Book.find()
+      .skip((page - 1) * limit)
+      .limit(limit);
+    res.status(200).json({
+      page,
+      limit,
+      total: await Book.countDocuments(),
+      data: books,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -38,7 +48,10 @@ export const getAllBooks = async (req, res) => {
 export const getBookById = async (req, res) => {
   try {
     const { bookId } = req.params;
-    const book = await Book.findById(bookId).populate("borrowedBy", "name email");
+    const book = await Book.findById(bookId).populate(
+      "borrowedBy",
+      "name email"
+    );
 
     if (!book) {
       return res.status(404).json({ message: "Book not found" });

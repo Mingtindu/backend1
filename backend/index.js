@@ -6,10 +6,18 @@ import uploadRoutes from "./routes/upload.route.js";
 import borroRoutes from "./routes/borrow.route.js";
 import { connectDB } from "./config/db.js";
 import { config } from "./config/config.js";
+import morgan from "morgan";
+import cors from "cors";
 
 const app = express();
 connectDB();
-
+app.use(
+  cors({
+    origin: config.CORS_ORIGIN,
+    credentials: true,
+  })
+);
+app.use(morgan("dev"));
 app.use(express.json());
 
 // middleware
